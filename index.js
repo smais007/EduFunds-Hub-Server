@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -31,6 +32,15 @@ async function run() {
       .collection("users");
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    // JWT related API
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
 
     // User related API
     app.post("/users", async (req, res) => {
@@ -82,6 +92,13 @@ async function run() {
     app.get("/scholarships", async (req, res) => {
       const cursor = schloarshipCollection.find();
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.delete("/scholarships/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await schloarshipCollection.deleteOne(query);
       res.send(result);
     });
 
