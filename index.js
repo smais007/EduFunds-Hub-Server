@@ -101,7 +101,19 @@ async function run() {
       const result = await schloarshipCollection.deleteOne(query);
       res.send(result);
     });
+    // getting details by id
+    app.get("/scholarships/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const scholarship = await schloarshipCollection.findOne(query);
 
+      if (scholarship) {
+        res.json(scholarship);
+      } else {
+        res.status(404).json({ message: "Scholarship not found" });
+      }
+    });
+    // Updete scholarship infprmation
     app.patch("/scholarships/:id", async (req, res) => {
       const id = req.params.id;
       const updateData = req.body;
