@@ -102,6 +102,17 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/scholarships/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateData = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: updateData,
+      };
+      const result = await schloarshipCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
