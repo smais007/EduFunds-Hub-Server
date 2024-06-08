@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Middlewire
 app.use(cors());
@@ -30,6 +31,9 @@ async function run() {
     const userCollection = client
       .db("scholarshipManagementDB")
       .collection("users");
+    const paymentCollection = client
+      .db("scholarshipManagementDB")
+      .collection("payments");
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
@@ -67,6 +71,31 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+
+      const ammount = parseInt(price * 100);
+
+      console.log("inside the intent", ammount);
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: ammount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    // stripe.customers
+    //   .create({
+    //     email: "customer@example.com",
+    //   })
+    //   .then((customer) => console.log(customer))
+    //   .catch((error) => console.error(error));
 
     // Endpoint to update user role
     app.patch("/users/role/:id", async (req, res) => {
@@ -122,6 +151,19 @@ async function run() {
         $set: updateData,
       };
       const result = await schloarshipCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    // Payment API
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment);
+      res.send(paymentResult);
+    });
+
+    app.get("/payments", async (req, res) => {
+      const cursor = paymentCollection.find();
+      const result = await cursor.toArray();
       res.send(result);
     });
 
