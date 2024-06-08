@@ -167,6 +167,29 @@ async function run() {
       res.send(result);
     });
 
+    // Endpoint to update payment information
+    app.put("/payments", async (req, res) => {
+      try {
+        const { scholarshipId, ...updateData } = req.body;
+
+        // Find and update the payment record with the provided scholarshipId
+        const updatedPayment = await paymentCollection.findOneAndUpdate(
+          { scholarshipId },
+          { $set: updateData },
+          { returnDocument: "after", upsert: true }
+        );
+
+        if (updatedPayment.value) {
+          res.status(200).json({ updatedId: updatedPayment.value._id });
+        } else {
+          res.status(404).json({ error: "Payment not found" });
+        }
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
