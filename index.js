@@ -34,6 +34,9 @@ async function run() {
     const paymentCollection = client
       .db("scholarshipManagementDB")
       .collection("payments");
+    const reviewsCollection = client
+      .db("scholarshipManagementDB")
+      .collection("reviews");
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
@@ -212,7 +215,6 @@ async function run() {
       res.send(result);
     });
 
-
     app.delete("/payments/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -220,6 +222,35 @@ async function run() {
       res.send(result);
     });
 
+    // ----------Reciews-------------//
+    app.post("/reviews", async (req, res) => {
+      try {
+        const { university, review, email, rating } = req.body;
+        const reviewData = { university, review, email, rating };
+        const result = await reviewsCollection.insertOne(reviewData);
+        res.status(201).send(result);
+      } catch (error) {
+        res.status(500).send(error.message);
+      }
+    });
+
+    app.get("/reviews", async (req, res) => {
+      const cursor = reviewsCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+    app.get("/payments/:email", async (req, res) => {
+      const query = { email: req.params.email };
+      if (!req.params.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
