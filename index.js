@@ -190,14 +190,35 @@ async function run() {
     });
 
     // Endpoint to get payments by email
-    app.get('/payments/:email', async(req,res)=>{
-      const query = {email:req.params.email}
-      if(!req.params.email){
-        return res.status(403).send({message: 'forbidden access'})
+    app.get("/payments/:email", async (req, res) => {
+      const query = { email: req.params.email };
+      if (!req.params.email) {
+        return res.status(403).send({ message: "forbidden access" });
       }
-      const result = await paymentCollection.find(query).toArray()
-      res.send(result)
-    })
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.patch("/payments/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body; // Get the new role from the request body
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await paymentCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+
+    app.delete("/payments/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await paymentCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -205,8 +226,6 @@ async function run() {
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
   }
 }
 run().catch(console.dir);
