@@ -130,6 +130,7 @@ async function run() {
       const result = await schloarshipCollection.deleteOne(query);
       res.send(result);
     });
+
     // getting details by id
     app.get("/scholarships/:id", async (req, res) => {
       const id = req.params.id;
@@ -171,8 +172,6 @@ async function run() {
     app.put("/payments", async (req, res) => {
       try {
         const { scholarshipId, ...updateData } = req.body;
-
-        // Find and update the payment record with the provided scholarshipId
         const updatedPayment = await paymentCollection.findOneAndUpdate(
           { scholarshipId },
           { $set: updateData },
@@ -189,6 +188,16 @@ async function run() {
         res.status(500).json({ error: "Internal server error" });
       }
     });
+
+    // Endpoint to get payments by email
+    app.get('/payments/:email', async(req,res)=>{
+      const query = {email:req.params.email}
+      if(!req.params.email){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      const result = await paymentCollection.find(query).toArray()
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
